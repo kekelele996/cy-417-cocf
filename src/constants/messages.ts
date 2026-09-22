@@ -6,5 +6,16 @@ export const messages = {
   emptySpots: '没有符合条件的景点。',
   budgetExceeded: '预算可能超支，请调整景点或交通方式',
   storageRecovered: '本地数据已恢复',
+  memberAdded: '同行人已加入',
+  memberExists: '同行人已在名单中',
+  memberRequired: '请输入同行人姓名',
+  memberRemoved: '同行人已移除，其负责项已一次性转交',
+  memberRemoveBlocked: '无法移除：其负责的日程项存在时间冲突，找不到合适的接收人，分工保持不变',
+  memberLastOne: '至少保留一名同行人',
+  ownerAssigned: '负责人已更新',
+  ownerCleared: '负责人已清空',
+  ownerConflict: '该成员此时段已有负责日程，同一时间最多负责一项',
+  ownerNotMember: '负责人必须是行程同行人',
+  assistantIsOwner: '负责人不能同时担任该项协助人',
+  assistantUpdated: '协助人已更新',
 };
-

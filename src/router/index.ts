@@ -14,7 +14,7 @@ const router = createRouter({
     { path: '/trip/:id', component: TripDetail },
     { path: '/spots', component: Spots },
     { path: '/planner/:tripId/:dayIndex', component: Planner },
-    { path: '/share', component: Share },
+    { path: '/share/:id?', component: Share },
   ],
 });
 installGuards(router);

@@ -3,6 +3,7 @@ import type { DayPlan, DayPlanItem } from '../models/dayPlan';
 import { dayPlanApi } from '../api/dayPlanApi';
 import { messages } from '../constants/messages';
 import { toast } from '../utils/message';
+import { findDay, hasOwnerConflict } from '../utils/assignment';
 
 export const useDayPlanStore = defineStore('dayPlan', {
   state: () => ({ dayPlans: dayPlanApi.list() as DayPlan[] }),
@@ -22,12 +23,62 @@ export const useDayPlanStore = defineStore('dayPlan', {
       dayPlanApi.save(this.dayPlans);
       toast.ok(messages.spotAdded);
     },
+    /** 拖拽排序后若出现同一负责人的时间重叠，则拒绝本次移动并保持原序 */
     reorder(tripId: string, dayIndex: number, from: number, to: number) {
-      const day = this.ensureDay(tripId, dayIndex);
+      const day = findDay(this.dayPlans, tripId, dayIndex);
+      if (!day) return;
+      const previous = day.items.slice();
       const [moved] = day.items.splice(from, 1);
-      if (moved) day.items.splice(to, 0, moved);
+      if (!moved) return;
+      day.items.splice(to, 0, moved);
+      if (moved.owner && hasOwnerConflict(day, moved.owner, moved)) {
+        day.items = previous;
+        toast.warn(messages.ownerConflict);
+        return;
+      }
       dayPlanApi.save(this.dayPlans);
+    },
+    /** 设置负责人；member 为空表示清空。同一成员同一天时间重叠的负责项最多 1 项 */
+    assignOwner(tripId: string, dayIndex: number, item: DayPlanItem, member: string, members: string[]) {
+      const day = findDay(this.dayPlans, tripId, dayIndex);
+      const target = day?.items.find((candidate) => candidate === item);
+      if (!day || !target) return false;
+      if (!member) {
+        target.owner = undefined;
+        dayPlanApi.save(this.dayPlans);
+        toast.ok(messages.ownerCleared);
+        return true;
+      }
+      if (!members.includes(member)) {
+        toast.fail(messages.ownerNotMember);
+        return false;
+      }
+      if (hasOwnerConflict(day, member, target)) {
+        toast.warn(messages.ownerConflict);
+        return false;
+      }
+      target.owner = member;
+      // 负责人不再出现在协助名单中
+      if (target.assistants?.length) target.assistants = target.assistants.filter((name) => name !== member);
+      dayPlanApi.save(this.dayPlans);
+      toast.ok(messages.ownerAssigned);
+      return true;
+    },
+    /** 设置协助人；协助不受时间重叠限制，但必须仍是同行人且不能与负责人重复 */
+    setAssistants(tripId: string, dayIndex: number, item: DayPlanItem, assistants: string[], members: string[]) {
+      const day = findDay(this.dayPlans, tripId, dayIndex);
+      const target = day?.items.find((candidate) => candidate === item);
+      if (!day || !target) return false;
+      if (assistants.some((name) => !members.includes(name))) {
+        toast.fail(messages.ownerNotMember);
+        return false;
+      }
+      const next = [...new Set(assistants)].filter((name) => name !== target.owner);
+      if (target.owner && assistants.includes(target.owner)) toast.warn(messages.assistantIsOwner);
+      target.assistants = next;
+      dayPlanApi.save(this.dayPlans);
+      toast.ok(messages.assistantUpdated);
+      return true;
     },
   },
 });
-
