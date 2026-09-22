@@ -10,6 +10,7 @@
       <BudgetChart :spent="stats.value.budget.spent" :remaining="stats.value.budget.remaining" />
       <div class="band"><strong>统计</strong><p>天数 {{ stats.value.days }} · 景点 {{ stats.value.spotCount }}</p><p class="muted">{{ stats.value.budget.warning }}</p></div>
     </section>
+    <MemberManager :trip="trip" />
     <DayTimeline v-for="day in tripDays" :key="day.id" :day="day" :spots="spotStore.spots" />
   </main>
   <main v-else class="page"><EmptyState title="旅行不存在" /></main>
@@ -25,6 +26,7 @@ import TripHeader from '../components/common/TripHeader.vue';
 import DayTimeline from '../components/common/DayTimeline.vue';
 import BudgetChart from '../components/common/BudgetChart.vue';
 import EmptyState from '../components/common/EmptyState.vue';
+import MemberManager from '../components/common/MemberManager.vue';
 const route = useRoute();
 const router = useRouter();
 const tripStore = useTripStore();
